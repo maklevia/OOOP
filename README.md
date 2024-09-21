@@ -1,2 +1,7 @@
 # OOOP
-labs and projects for 2nd year
+Klevchuk Mariia, IPS-22
+OOP labs and project for 2nd year
+
+LAB1
+List 1: Variant
+List 2: Variant 

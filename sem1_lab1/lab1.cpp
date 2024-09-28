@@ -8,7 +8,7 @@ using namespace std;
 class GraphAdjList
 {
     private:
-    int V; //number of vertices
+    int V = 0; //number of vertices
     vector <vector<int>> adj_list; //adjacency list
     vector <string> vertices; //this graph store string data in vertices
     
@@ -16,14 +16,15 @@ class GraphAdjList
     void add_edge_gen(string vertex1, string vertex2);
     void delete_vertex_gen(string vertex1);
     void delete_edge_gen(string vertex1, string vertex2);
+    void DFS(int v, bool is_visited[]);
     
     public:
-    GraphAdjList (int V) : adj_list(V), vertices(V) {};
     void add_vertex ();
     void delete_vertex();
     void add_edge ();
     void delete_edge ();
     void print_graph();
+    bool is_connected();
 };
 
 int GraphAdjList::find_vertex_index(const string &vertex) const
@@ -76,6 +77,32 @@ void GraphAdjList::delete_vertex_gen(string vertex)
             }
         }
     }
+}
+
+void GraphAdjList::DFS(int v, bool is_visited[])
+{
+    is_visited[v] = true;
+    for (int current : adj_list[v])
+    {
+        if (!is_visited[current])
+        {
+            DFS(current, is_visited);
+        }
+    }
+}
+
+bool GraphAdjList::is_connected()
+{
+    bool is_visited[] = {false};
+    DFS(0, is_visited);
+    for (int i = 0; i < V; i++)
+    {
+        if (!is_visited[i])
+        {
+            return false;
+        }
+    }
+    return true;
 }
 
 void GraphAdjList::print_graph()
@@ -197,7 +224,7 @@ private:
 
 int main ()
 {
-    GraphAdjList Places(0);
+    GraphAdjList Places;
     Places.add_vertex();
     Places.add_vertex();
     Places.add_vertex();
@@ -208,5 +235,9 @@ int main ()
     Places.print_graph();
     Places.delete_edge();
     Places.print_graph();
+    if (!Places.is_connected())
+        cout << "FALSE " << endl;
+    else
+        cout << "TRUE" << endl;
     return 0;
 }

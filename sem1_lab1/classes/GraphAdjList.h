@@ -178,7 +178,7 @@ void GraphAdjList::add_vertex ()
         cout << "Choose to which excisting vertices you want to connect the new one. Type \n 1 - isolated vertex\n 2 - connected to an excisting vertex\n 3 - between two excisting vertices" << endl;
         cin >> answer;
 
-        if (answer != 1 or answer != 2 or answer != 3 )
+        if (answer != 1 and answer != 2 and answer != 3 )
     {
         cout << "Incorrect input! Please try again." << endl;
     }

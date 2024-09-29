@@ -2,6 +2,7 @@
 #include <vector>
 #include <algorithm>
 #include <string>
+#include <queue>
 using namespace std;
 
 class GraphMatrix 
@@ -17,16 +18,17 @@ class GraphMatrix
     void add_edge_gen(string vertex1, string vertex2);
     void delete_edge_gen(string vertex1, string vertex2);
     void delete_vertex_gen (string vertex);
-    void DFS (int v, bool visited[]);
+    void DFS (int v, vector<bool> &visited);
 
     public:
+    GraphMatrix(bool directed = false) : is_directed(directed) {}
     void print_matrix();
     void add_vertex();
     void add_edge();
     void delete_vertex();
     void delete_edge();
     bool is_connected();
-    int shortest_path();
+    int shortest_path(string start, string end);
 };
 
 void GraphMatrix:: print_matrix ()
@@ -107,7 +109,7 @@ void GraphMatrix:: add_vertex ()
     cout << "Choose the type of vertex do you want to add  Enter:\n 1 - isolated\n 2 - connected to existimh vertex\n ";
     cout << "3 - between two existing vertices" << endl;
     cin >> answer;
-    if (answer != 1 or answer != 2 or answer != 3 )
+    if (answer != 1 and answer != 2 and answer != 3 )
     {
         cout << "Incorrect input! Please try again." << endl;
     }
@@ -186,12 +188,12 @@ void GraphMatrix:: delete_vertex_gen (string vertex)
     else 
     {
         V--;
-        matrix.erase(matrix.begin() + index);
+        matrix.erase(matrix.begin() + ind);
         for (int i = 0; i < matrix.size(); ++i) 
         {
-            matrix[i].erase(matrix[i].begin() + index);
+            matrix[i].erase(matrix[i].begin() + ind);
         }
-        mvertices.erase(mvertices.begin() + index);
+        mvertices.erase(mvertices.begin() + ind);
     }
 }
 
@@ -203,13 +205,73 @@ void GraphMatrix:: delete_vertex()
     delete_vertex_gen (vertex);
 }
 
-void GraphMatrix:: DFS(int v, bool visited[])
+void GraphMatrix:: DFS(int v, vector<bool> &visited)
 {
     visited[v] = true;
-    if(int current : matrix[v][current])
+    for (int current = 0; current < V; current++)
+    {
+        if (matrix[v][current] == 1 and !visited[current])
+        {
+            DFS(current, visited);
+        }
+    }
 }
 
 bool GraphMatrix:: is_connected ()
 {
+    vector<bool> visited(V, false);
+    DFS(0, visited);
+    for (int i = 0; i < V; i++)
+    {
+        if (!visited [i])
+        {
+            return false;
+        }
+    }
+    return true;
 }
 
+int GraphMatrix:: shortest_path (string start, string end)
+{
+    if (start == end)
+    {
+        return 0;
+    } 
+
+    int ind1 = index_of_vertex(start);
+    int ind2 = index_of_vertex(end);
+    if (ind1 == -1 or ind2 == -1)
+    {
+        cout << "One or both vertices do not exist! Please try again." << endl;
+        return -1;
+    }
+
+    queue<int> q;
+    vector<int> Distance(V, -1);
+    vector<bool> visited(V, false);
+
+    q.push(ind1);
+    Distance[ind1] = 0;
+    visited[ind1] = true;
+
+    while (!q.empty())
+    {
+        int current = q.front();
+        q.pop();
+        for(int i = 0; i < V; i++)
+        {
+            if(matrix[current][i] == 1 and !visited[i])
+            {
+                visited[i] = true;
+                Distance[i] = Distance[current] + 1;
+                if (i == ind2)
+                {
+                    return Distance[i];
+                }
+                q.push(i);
+            }
+        }
+
+    }
+    return -1; //path was not found
+}

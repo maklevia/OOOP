@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <queue>
 using namespace std;
 
 
@@ -25,6 +26,7 @@ class GraphAdjList
     void delete_edge ();
     void print_graph();
     bool is_connected();
+    int shortest_path(string start, string end);
 };
 
 int GraphAdjList::find_vertex_index(const string &vertex) const
@@ -212,6 +214,50 @@ void GraphAdjList::add_vertex ()
                     add_edge_gen(vertex, vertex2);
                 }
             }
+}
+
+int GraphAdjList::shortest_path (string start, string end)
+{
+    if (start == end)
+    {
+        return 0;
+    }
+    int ind1 = find_vertex_index(start);
+    int ind2 = find_vertex_index(end);
+    if (ind1 == -1 or ind2 == -1)
+    {
+        cout << "Incorrect input. Please try again." << endl;
+        return -1;
+    }
+    queue<int> q;
+    q.push(ind1);
+
+    vector <bool> visited(V, false);
+    vector <int> Distance(V, -1);
+
+    visited[ind1] = true;
+    Distance[ind1] = 0;
+
+    while (!q.empty())
+    {
+        int current = q.front();
+        q.pop();
+
+        for (int i : adj_list[current])
+        {
+            if (!visited[i])
+            {
+                visited[i] = true;
+                Distance[i] = Distance[current] + 1;
+                if (i == ind2)
+                {
+                   return Distance[i];
+                }
+                q.push(i);
+            }
+        }
+    }
+    return -1; //if path wasn't found
 }
 
 //--------------------------Graph Adjacency Matrix----------------------------

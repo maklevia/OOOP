@@ -36,7 +36,7 @@ int GraphAdjList::find_vertex_index(const string &vertex) const
     {
         return distance(vertices.begin(), ind);
     }
-    return -1;
+    return -1; //if vertex wasn't found (do not exists)
 }
 
 void GraphAdjList::delete_edge_gen(string vertex1, string vertex2)
@@ -177,6 +177,11 @@ void GraphAdjList::add_vertex ()
         int answer;
         cout << "Choose to which excisting vertices you want to connect the new one. Type \n 1 - isolated vertex\n 2 - connected to an excisting vertex\n 3 - between two excisting vertices" << endl;
         cin >> answer;
+
+        if (answer != 1 or answer != 2 or answer != 3 )
+    {
+        cout << "Incorrect input! Please try again." << endl;
+    }
             if (answer == 2)
             {
                 string vertex1;

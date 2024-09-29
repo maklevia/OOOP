@@ -2,14 +2,6 @@
 #include "classes/GraphAdjList.h"
 using namespace std;
 
-//--------------------------Graph Adjacency Matrix----------------------------
-class GraphMatrix
-{
-private:
-
-};
-
-
 int main ()
 {
     GraphAdjList Places;

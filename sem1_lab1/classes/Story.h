@@ -4,6 +4,7 @@
 #include <map>
 #include "GraphAdjList.h"
 #include <algorithm>
+#include <sstream>
 using namespace std;
 
 //-------------Classes for the Story---------------
@@ -37,6 +38,20 @@ class Character
        {
             return location;
        } 
+    Role get_role () const
+    {
+        return role;
+    }
+
+    vector<string> get_skills () const
+    {
+        return skills;
+    }
+
+    map <string, string> get_relationships () const
+    {
+        return relationships;
+    }
 
     void change_location(Location& current_location, const string& destination, RealityCheck& reality_check);
     bool has_skill (const string& skill) const;
@@ -89,7 +104,7 @@ void Character:: print_character_info()
 
 bool Character:: has_skill (const string& skill) const
 {
-    return find(skills.begin(), skills.end(), skill) == skills.end();
+    return find(skills.begin(), skills.end(), skill) != skills.end();
 }
 
 void Character:: add_relationships (Character& character1, const std::string& relationship)
@@ -120,6 +135,11 @@ void Character:: add_relationships (Character& character1, const std::string& re
 
 void Character:: change_location (Location& current_location, const std::string& destination, RealityCheck& reality_check)
 { 
+    if (location == destination) 
+    {
+    cout << name << " is already at " << destination << ". No need to move." << endl;
+    return;
+    }
     if (current_location.can_move_to(*this, location, destination) and reality_check.assign_location(*this, destination)) 
     {
         location = destination;
@@ -187,6 +207,13 @@ void Location:: add_loc_with_skills(const string& location, const vector<string>
 
 bool Location:: can_move_to (Character& character, const string& start, const string& destination)
 {
+    int ind = find_vertex_index(destination);
+    if (ind == -1)
+    {
+        cout << "Location not found!" << endl;
+        return false;
+    }
+    
     //checking if path between start and destination exists
     int Distance = shortest_path(start, destination);
     if (Distance == -1)
@@ -237,8 +264,11 @@ class Event
     public:
    Event(const string& event_name, const Location& loc, int time, int duration, vector<string> skill)
         : event_name(event_name), event_location(loc), time(time), duration(duration), event_skills(skill) {}
-    int get_time () {return time;}
-    int get_duration () {return duration;}
+
+    std::string get_event_name () const {return event_name;};
+    vector<string> get_event_skills () const {return event_skills;};
+    int get_time () const {return time;};
+    int get_duration () const {return duration;};
     void add_participants (Character* character, RealityCheck& reality_check);
 };
 
@@ -278,6 +308,10 @@ bool RealityCheck:: assign_event(Character& character, Event& event)
 {
     int event_start_time = event.get_time();
     int event_end_time = event.get_time() + event.get_duration();
+    if (event_end_time > 24) 
+    {
+    event_end_time = 24; // restrict event duration to end by midnight
+    }
     if (character_events.find(character.get_name()) != character_events.end())
     {
         Event* current_event = character_events[character.get_name()].first;
@@ -304,4 +338,143 @@ bool RealityCheck:: assign_location (Character& character, const string& locatio
     }
     character_locations[character.get_name()] = location_name;
     return true;
+}
+
+class AlternativeEventModeling {
+private:
+    string alt_name;
+    Event* original_event;
+    std::vector<Event*> alternative_events;
+    std::map<Event*, std::string> consequences;
+
+public:
+    AlternativeEventModeling(Event* original_event) : original_event(original_event) {}
+    string get_event_name () const {return alt_name;};
+
+
+    void add_alternative_event(Event* alt_event, const std::string& consequence);
+    void print_alternatives() const;
+    //this function is not fully implemented. it is necessary to choose the logic of choosing the best alternative.
+    Event* choose_best_alternative();
+};
+
+void AlternativeEventModeling:: add_alternative_event (Event* alt_event, const std::string& consequence)
+{
+    alternative_events.push_back(alt_event);
+    consequences[alt_event] = consequence;
+}
+
+void AlternativeEventModeling:: print_alternatives() const 
+{
+    std::cout << "Original Event: " << original_event->get_event_name() << std::endl;
+    std::cout << "Alternatives and consequences:\n";
+    for (const auto& alt_event : alternative_events) 
+    {
+        std::cout << "- Alternative: " << alt_event->get_event_name() << ", Consequence: " << consequences.at(alt_event) << std::endl;
+    }
+}
+
+Event* AlternativeEventModeling:: choose_best_alternative() 
+{
+    if (alternative_events.empty()) 
+    {
+        std::cout << "No alternatives available." << std::endl;
+        return original_event;
+    }
+    Event* best_event = original_event;
+    for (auto& alt_event : alternative_events) 
+    {
+        //the logic of comparing the consequences of events can be implemented. based on this, the best alternative is selected.
+    }
+    return best_event;
+}
+
+class ReportGenerator
+{
+public:
+    static string generate_character_report(const Character& character);
+    static string generate_event_report(const Event& event);
+    static string generate_location_report(const Location& location);
+    static string generate_full_report(const vector<Character>& characters,
+                                        const vector<Event>& events,
+                                        const vector<Location>& locations);
+};
+
+std:: string ReportGenerator:: generate_character_report(const Character& character)
+{
+        
+    stringstream report;
+    report << "Character Report\n";
+    report << "==================\n";
+    report << "Name: " << character.get_name() << "\n";
+    report << "Location: " << character.get_location() << "\n";
+    report << "Role: ";
+        switch (character.get_role())
+        {
+        case Role::Protagonist: report << "Protagonist"; break;
+        case Role::Antagonist: report << "Antagonist"; break;
+        case Role::Supporting: report << "Supporting"; break;
+        }
+    report << "\nSkills: ";
+        for (const auto& skill : character.get_skills())
+        {
+            report << skill << " ";
+        }
+    report << "\nRelationships: ";
+        for (const auto& rel : character.get_relationships())
+        {
+            report << rel.first << ": " << rel.second << ", ";
+        }
+    report << "\n";
+ }
+
+ std:: string ReportGenerator:: generate_event_report(const Event& event)
+ {
+    stringstream report;
+    report << "Event Report\n";
+    report << "==================\n";
+    report << "Event Name: " << event.get_event_name() << "\n";
+    report << "Time: " << event.get_time() << "\n";
+    report << "Duration: " << event.get_duration() << "\n";
+    report << "Skills Required: ";
+        for (const auto& skill : event.get_event_skills())
+        {
+            report << skill << " ";
+        }
+    report << "\n";
+    return report.str();
+ }
+
+std:: string ReportGenerator:: generate_location_report(const Location& location)
+{
+    stringstream report;
+    report << "Location Report\n";
+    report << "==================\n";
+    report << "Location Name: " << location.get_locname() << "\n";
+    return report.str();
+}
+
+std:: string ReportGenerator:: generate_full_report (const vector<Character>& characters,
+                                        const vector<Event>& events,
+                                        const vector<Location>& locations)
+{
+    stringstream full_report;
+    full_report << "Full Report\n";
+    full_report << "==================\n";
+        for (const auto& character : characters)
+        {
+            full_report << generate_character_report(character) << "\n";
+        }
+
+        for (const auto& event : events)
+        {
+            full_report << generate_event_report(event) << "\n";
+        }
+
+        for (const auto& location : locations)
+        {
+            full_report << generate_location_report(location) << "\n";
+        }
+
+        return full_report.str();
 }

@@ -133,20 +133,6 @@ void Character:: add_relationships (Character& character1, const std::string& re
     }
 }
 
-void Character:: change_location (Location& current_location, const std::string& destination, RealityCheck& reality_check)
-{ 
-    if (location == destination) 
-    {
-    cout << name << " is already at " << destination << ". No need to move." << endl;
-    return;
-    }
-    if (current_location.can_move_to(*this, location, destination) and reality_check.assign_location(*this, destination)) 
-    {
-        location = destination;
-        cout << name << " moved to " << location << endl;
-    }
-}
-
 void Character:: add_skill(string skill)
 {
     if (!has_skill(skill))
@@ -223,8 +209,8 @@ bool Location:: can_move_to (Character& character, const string& start, const st
     }
 
     //checking if character has required skills
-    int ind = find_vertex_index(destination);
-        if (ind == -1) 
+    int IND = find_vertex_index(destination);
+        if (IND == -1) 
         {
             cout << "Location not found!" << endl;
             return false;
@@ -272,26 +258,6 @@ class Event
     void add_participants (Character* character, RealityCheck& reality_check);
 };
 
-void Event:: add_participants(Character* character, RealityCheck& reality_check)
-{
-        //reality check
-    if (reality_check.assign_event(*character, *this)) 
-    {
-    //check if character has required skills
-    for (const auto& skill : event_skills) 
-    {
-        if (!character -> has_skill(skill)) 
-        {
-            cout << character -> get_name() << " does not have the required skill: " << skill 
-                << " to participate in " << event_name << "." << endl;
-                return;
-        }
-    }
-        participants.push_back(character);
-        cout << character -> get_name() << " has been added to the event: " << event_name << endl;
-    }
-}
-
 class RealityCheck
 {
     private:
@@ -338,6 +304,39 @@ bool RealityCheck:: assign_location (Character& character, const string& locatio
     }
     character_locations[character.get_name()] = location_name;
     return true;
+}
+
+void Character:: change_location (Location& current_location, const std::string& destination, RealityCheck& reality_check)
+{ 
+    if (location == destination) 
+    {
+    cout << name << " is already at " << destination << ". No need to move." << endl;
+    return;
+    }
+    if (current_location.can_move_to(*this, location, destination) and reality_check.assign_location(*this, destination)) 
+    {
+        location = destination;
+        cout << name << " moved to " << location << endl;
+    }
+}
+void Event:: add_participants(Character* character, RealityCheck& reality_check)
+{
+        //reality check
+    if (reality_check.assign_event(*character, *this)) 
+    {
+    //check if character has required skills
+    for (const auto& skill : event_skills) 
+    {
+        if (!character -> has_skill(skill)) 
+        {
+            cout << character -> get_name() << " does not have the required skill: " << skill 
+                << " to participate in " << event_name << "." << endl;
+                return;
+        }
+    }
+        participants.push_back(character);
+        cout << character -> get_name() << " has been added to the event: " << event_name << endl;
+    }
 }
 
 class AlternativeEventModeling {
@@ -426,6 +425,7 @@ std:: string ReportGenerator:: generate_character_report(const Character& charac
             report << rel.first << ": " << rel.second << ", ";
         }
     report << "\n";
+    return report.str();
  }
 
  std:: string ReportGenerator:: generate_event_report(const Event& event)

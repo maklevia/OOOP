@@ -13,6 +13,8 @@ enum class Role
     Supporting
 };
 
+class Location;
+
 class Character
 {
     protected:
@@ -33,27 +35,21 @@ class Character
             return location;
        } 
 
-    void change_location (string newlocation);
-    bool has_skill (string skill);
+    void change_location(const Location& newlocation);
+    bool has_skill (const string& skill) const;
     void add_skill (string skill);
-    void teach_skill (string skill, Character chatacter1); //allows a character to teach another character a skill (if they are not enemies)
-    void add_relationships (Character character1, string relationship);
+    void teach_skill (const string& skill, Character& character1); //allows a character to teach another character a skill (if they are not enemies)
+    void add_relationships (Character& character1, const string& relationship);
+    bool can_access(Location loc);
     void print_character_info();
 };
 
-bool Character:: has_skill (string skill)
+bool Character:: has_skill (const string& skill) const
 {
-    if (find(skills.begin(), skills.end(), skill) == skills.end())
-    {
-        return false;
-    }
-    else 
-    {
-        return true;
-    }
+    return find(skills.begin(), skills.end(), skill) == skills.end();
 }
 
-void Character:: add_relationships (Character character1, string relationship)
+void Character:: add_relationships (Character& character1, const string& relationship)
 {
     if (relationships[character1.get_name()].empty())
     {
@@ -65,27 +61,33 @@ void Character:: add_relationships (Character character1, string relationship)
         int answer;
         cout << "These two characters already have a relationship. Do you want to change the relationships between these characters?\n";
         cout << "Type in 0 if NO\n Type in 1 if YES" << endl;
+        cin >> answer;
+        
         if (answer != 0 and answer != 1)
         {
             cout << "Incorrect input. Please try again. " << endl;
         }
         if (answer)
+        {
             relationships[character1.get_name()] = relationship;
+            character1.relationships[this->get_name()] = relationship;
+        }
     }
 }
 
-void Character:: change_location (string newlocation)
+void Character:: change_location(const Location& newlocation)
 { 
-    if (loc.can_access(*this)) //111111
+    if (newlocation.can_access(*this)) 
     {
-        location = newlocation;
+        location = newlocation.get_locname();
         cout << name << " moved to " << location << endl;
     }
     else
     {
-        cout << name << " cannot move to " << location << "! They do not have requred skills." << endl;
+        cout << name << " cannot move to " << newlocation.get_locname() << "! They do not have the required skills." << endl;
     }
 }
+
 
 void Character:: add_skill(string skill)
 {
@@ -100,7 +102,7 @@ void Character:: add_skill(string skill)
         }
  }
 
-void Character:: teach_skill (string skill, Character character1)
+void Character:: teach_skill (const string& skill, Character& character1)
 {
     if (!has_skill(skill))
     {
@@ -123,8 +125,28 @@ void Character:: teach_skill (string skill, Character character1)
 class Location
 {
     protected:
-    vector <string> requrid_skills; //write None if any skill is required
+    string loc_name;
+    vector <string> required_skills; //write None if any skill is required
+
     public:
-    bool can_access(Character character);
+    Location(string name, vector<string> skills) : loc_name(name), required_skills(skills) {}
+    string get_locname () const
+    {
+        return loc_name;
+    }
+    bool can_access(const Character& character) const;
+    
 };
+
+bool Location:: can_access (const Character& character) const
+{
+    for (const auto& skill : required_skills)
+    {
+        if (!character.has_skill(skill))
+        {
+            return false;
+        }
+    }
+    return true;
+}
 

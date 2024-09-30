@@ -20,8 +20,7 @@ int main() {
     villain.add_relationships(hero, "Enemy");
 
     // Створюємо локації
-    Location world_map;
-    world_map.add_loc_with_skills("City", {});
+    Location world_map ("City");
     world_map.add_loc_with_skills("Village", {});
     world_map.add_loc_with_skills("Mountain", {"Magic"});
 

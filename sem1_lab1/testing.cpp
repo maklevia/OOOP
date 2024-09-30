@@ -36,7 +36,7 @@ TEST_CASE ("Testing Character")
 
 TEST_CASE("Testing Event") 
 {
-    Location location;
+    Location location("name");
     vector<string> skills{"Sleep", "Eat"};
     Event battle("Battle", location, 10, 2, skills);
 

@@ -164,6 +164,26 @@ void Character:: teach_skill (const string& skill, Character& character1)
 }
 
 
+//the following two classes can be used to extend the program. for example, the priority of events for characters is determined 
+class MainCharacter : public Character 
+{
+public:
+    MainCharacter(string name) : Character(name, location, Role::Protagonist) {}
+    void print_info() const  
+    {
+        cout << "Main Character: " << name << endl;
+    }
+};
+
+class SideCharacter : public Character {
+public:
+    SideCharacter(string name) : Character(name, location, Role::Supporting) {}
+    void print_info() const 
+    {
+        cout << "Side Character: " << name << endl;
+    }
+};
+
 class Location : public GraphAdjList
 {
     protected:
@@ -171,6 +191,7 @@ class Location : public GraphAdjList
     map<string, vector<string>> required_skills; //write None if any skill is required
 
     public:
+    Location (string name) : loc_name(name) {};
     string get_locname () const
     {
         return loc_name;
@@ -235,6 +256,18 @@ bool Location:: can_move_to (Character& character, const string& start, const st
         }
         return true;
 }
+
+
+//class can be used to extend the program. for example, special "dangerous" locations can remove a character from the story
+class SpecialLocation : public Location 
+{
+public:
+    SpecialLocation(const string& name) : Location(name) {}
+    void print_special() const 
+    {
+        cout << "Special location: " << loc_name << endl;
+    }
+};
 
 class Event
 {
@@ -457,6 +490,7 @@ std:: string ReportGenerator:: generate_location_report(const Location& location
 std:: string ReportGenerator:: generate_full_report (const vector<Character>& characters,
                                         const vector<Event>& events,
                                         const vector<Location>& locations)
+                                    
 {
     stringstream full_report;
     full_report << "Full Report\n";
@@ -478,3 +512,25 @@ std:: string ReportGenerator:: generate_full_report (const vector<Character>& ch
 
         return full_report.str();
 }
+
+class Usable 
+{
+public:
+    virtual void use() const = 0; 
+};
+
+template <typename T> //creating items for the plot (ex sword, phone etc)
+class Item : public Usable 
+{
+    T value;
+
+public:
+    Item(T val) : value(val) {}
+    T get_value() const { return value; }
+    void print_item() const { cout << "Item value: " << value << endl; }
+
+    // Реалізація методу use
+    void use() const override {
+        cout << "Using item with value: " << value << endl;
+    }
+};

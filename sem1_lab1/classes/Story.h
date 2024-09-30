@@ -16,6 +16,7 @@ enum class Role
 };
 
 class Location;
+class RealityCheck;
 
 class Character
 {
@@ -25,7 +26,6 @@ class Character
     Role role;
     vector <string> skills; //skills allow Character get to Location
     map <string, string> relationships; //name - relationship. Used for teaching another character a skill
-    bool can_travel(); //checks if 
 
     public:
     Character (string name, string location, Role role) : name(name), location(location), role(role) {}
@@ -38,7 +38,7 @@ class Character
             return location;
        } 
 
-    void change_location(Location& current_location, const string& destination);
+    void change_location(Location& current_location, const string& destination, RealityCheck& reality_check);
     bool has_skill (const string& skill) const;
     void add_skill (string skill);
     void teach_skill (const string& skill, Character& character1); //allows a character to teach another character a skill (if they are not enemies)
@@ -92,7 +92,7 @@ bool Character:: has_skill (const string& skill) const
     return find(skills.begin(), skills.end(), skill) == skills.end();
 }
 
-void Character:: add_relationships (Character& character1, const string& relationship)
+void Character:: add_relationships (Character& character1, const std::string& relationship)
 {
     if (relationships[character1.get_name()].empty())
     {
@@ -118,11 +118,9 @@ void Character:: add_relationships (Character& character1, const string& relatio
     }
 }
 
-
-
-void Character:: change_location (Location& current_location, const string& destination)
+void Character:: change_location (Location& current_location, const std::string& destination, RealityCheck& reality_check)
 { 
-    if (current_location.can_move_to(*this, location, destination)) 
+    if (current_location.can_move_to(*this, location, destination) and reality_check.assign_location(*this, destination)) 
     {
         location = destination;
         cout << name << " moved to " << location << endl;
@@ -223,4 +221,87 @@ bool Location:: can_move_to (Character& character, const string& start, const st
             return false;
         }
         return true;
+}
+
+class Event
+{
+    private:
+    string event_name;
+    string description; // detailed description of the event
+    vector <Character*> participants; //characters that partisipate in the event
+    Location event_location;
+    int time; //time when event occurs in hours (0-24)
+    int duration; //of the event in hours
+    vector<string> event_skills; // skills required to participate in the event
+
+    public:
+   Event(const string& event_name, const Location& loc, int time, int duration, vector<string> skill)
+        : event_name(event_name), event_location(loc), time(time), duration(duration), event_skills(skill) {}
+    int get_time () {return time;}
+    int get_duration () {return duration;}
+    void add_participants (Character* character, RealityCheck& reality_check);
+};
+
+void Event:: add_participants(Character* character, RealityCheck& reality_check)
+{
+        //reality check
+    if (reality_check.assign_event(*character, *this)) 
+    {
+    //check if character has required skills
+    for (const auto& skill : event_skills) 
+    {
+        if (!character -> has_skill(skill)) 
+        {
+            cout << character -> get_name() << " does not have the required skill: " << skill 
+                << " to participate in " << event_name << "." << endl;
+                return;
+        }
+    }
+        participants.push_back(character);
+        cout << character -> get_name() << " has been added to the event: " << event_name << endl;
+    }
+}
+
+class RealityCheck
+{
+    private:
+    map<string, string> character_locations;
+    map<string, pair<Event*, int>> character_events; //name, event and event's end time
+
+    public:
+    bool assign_location(Character& character, const string& location_name);
+    bool assign_event(Character& character, Event& event);
+
+};
+
+bool RealityCheck:: assign_event(Character& character, Event& event)
+{
+    int event_start_time = event.get_time();
+    int event_end_time = event.get_time() + event.get_duration();
+    if (character_events.find(character.get_name()) != character_events.end())
+    {
+        Event* current_event = character_events[character.get_name()].first;
+        int current_event_end_time = character_events[character.get_name()].second;
+
+        if (event_start_time < current_event_end_time)
+        {
+             cout << "Character " << character.get_name() << " is already in an event '" << current_event->get_time() 
+                << ". They cannot join event " << event.get_time() << "' at this time." << endl;
+             return false;
+        }
+    }
+    character_events[character.get_name()] = {&event, event_end_time};
+    cout << "Character " << character.get_name() << " has been assigned to event '" << event.get_time() << "'." << endl;
+    return true;
+}
+
+bool RealityCheck:: assign_location (Character& character, const string& location_name)
+{
+    if (character_locations.find(character.get_name()) != character_locations.end()) 
+    {
+        cout << character.get_name() << " is already at another location." << endl;
+        return false;
+    }
+    character_locations[character.get_name()] = location_name;
+    return true;
 }

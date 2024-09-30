@@ -2,6 +2,8 @@
 #include <vector>
 #include <string>
 #include <map>
+#include "GraphAdjList.h"
+#include <algorithm>
 using namespace std;
 
 //-------------Classes for the Story---------------
@@ -23,6 +25,7 @@ class Character
     Role role;
     vector <string> skills; //skills allow Character get to Location
     map <string, string> relationships; //name - relationship. Used for teaching another character a skill
+    bool can_travel(); //checks if 
 
     public:
     Character (string name, string location, Role role) : name(name), location(location), role(role) {}
@@ -35,14 +38,54 @@ class Character
             return location;
        } 
 
-    void change_location(const Location& newlocation);
+    void change_location(Location& current_location, const string& destination);
     bool has_skill (const string& skill) const;
     void add_skill (string skill);
     void teach_skill (const string& skill, Character& character1); //allows a character to teach another character a skill (if they are not enemies)
     void add_relationships (Character& character1, const string& relationship);
-    bool can_access(Location loc);
     void print_character_info();
 };
+
+void Character:: print_character_info()
+{
+    cout << "Charaster " << name << "\nCurrent location: " << location << "\n Has skills: ";
+    if (skills.empty())
+    {
+        cout << "None \n";
+    }
+    else
+    {
+        for (const auto& skill : skills)
+        {
+            cout << skill << " ";
+        }
+    }
+    cout << "\n Role: ";
+    switch(role)
+    {
+         case Role::Protagonist:
+            cout << "Protagonist";
+            break;
+        case Role::Antagonist:
+            cout << "Antagonist";
+            break;
+        case Role::Supporting:
+            cout << "Supporting";
+            break;
+    }
+    cout << "\n Relationships: ";
+    if (relationships.empty())
+    {
+        cout << "None " << endl;
+    }
+    else
+    {
+        for (const auto& rel : relationships) {
+            cout << rel.first << ": " << rel.second << ", ";
+        }
+    }
+     cout << endl; 
+}
 
 bool Character:: has_skill (const string& skill) const
 {
@@ -75,19 +118,16 @@ void Character:: add_relationships (Character& character1, const string& relatio
     }
 }
 
-void Character:: change_location(const Location& newlocation)
+
+
+void Character:: change_location (Location& current_location, const string& destination)
 { 
-    if (newlocation.can_access(*this)) 
+    if (current_location.can_move_to(*this, location, destination)) 
     {
-        location = newlocation.get_locname();
+        location = destination;
         cout << name << " moved to " << location << endl;
     }
-    else
-    {
-        cout << name << " cannot move to " << newlocation.get_locname() << "! They do not have the required skills." << endl;
-    }
 }
-
 
 void Character:: add_skill(string skill)
 {
@@ -116,37 +156,71 @@ void Character:: teach_skill (const string& skill, Character& character1)
     else
     {
         cout << "Relationships between characters do not allow them to teach this skill" << endl;
-
     }
-
 }
 
 
-class Location
+class Location : public GraphAdjList
 {
     protected:
     string loc_name;
-    vector <string> required_skills; //write None if any skill is required
+    map<string, vector<string>> required_skills; //write None if any skill is required
 
     public:
-    Location(string name, vector<string> skills) : loc_name(name), required_skills(skills) {}
     string get_locname () const
     {
         return loc_name;
     }
-    bool can_access(const Character& character) const;
-    
+    void add_loc_with_skills (const string& location, const vector<string>& required_skills);
+    bool can_move_to (Character& character, const string& start, const string& destination);
+    void print_map();
 };
-
-bool Location:: can_access (const Character& character) const
+void Location:: print_map() 
 {
-    for (const auto& skill : required_skills)
-    {
-        if (!character.has_skill(skill))
-        {
-            return false;
-        }
-    }
-    return true;
+        cout << "Current map:" << endl;
+        print_graph(); // Use GraphAdjList to print the graph
 }
 
+void Location:: add_loc_with_skills(const string& location, const vector<string>& req_skills)
+{
+    add_vertex();
+    required_skills[location] = req_skills;
+}
+
+bool Location:: can_move_to (Character& character, const string& start, const string& destination)
+{
+    //checking if path between start and destination exists
+    int Distance = shortest_path(start, destination);
+    if (Distance == -1)
+    {
+        cout << "No path exists between " << start << " and " << destination << "." << endl;
+        return false;
+    }
+
+    //checking if character has required skills
+    int ind = find_vertex_index(destination);
+        if (ind == -1) 
+        {
+            cout << "Location not found!" << endl;
+            return false;
+        }
+
+        auto it = required_skills.find(destination);
+        if (it != required_skills.end()) 
+        {
+            for (const auto& skill : it -> second) 
+            {
+                if (!character.has_skill(skill)) 
+                {
+                    cout << "Character " << character.get_name() << " does not have the required skill: " << skill << " to move to " << destination << endl;
+                    return false;
+                }
+            }
+        }
+        else
+        {
+            cout << "Destination " << destination << " not found in the skills map!" << endl;
+            return false;
+        }
+        return true;
+}

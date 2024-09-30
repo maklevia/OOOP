@@ -13,6 +13,7 @@ class GraphAdjList
     vector <vector<int>> adj_list; //adjacency list
     vector <string> vertices; //this graph store string data in vertices
     
+    protected:
     int find_vertex_index(const string &vertex) const;
     void add_edge_gen(string vertex1, string vertex2);
     void delete_vertex_gen(string vertex1);
